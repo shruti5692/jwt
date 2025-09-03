@@ -1,0 +1,37 @@
+package org.example.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "users") // db table name
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String custNo;
+    private String prodId;
+    private String prodCod;
+
+    private String username;
+    private String password;
+
+    // Getters & Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getCustNo() { return custNo; }
+    public void setCustNo(String custNo) { this.custNo = custNo; }
+
+    public String getProdId() { return prodId; }
+    public void setProdId(String prodId) { this.prodId = prodId; }
+
+    public String getProdCod() { return prodCod; }
+    public void setProdCod(String prodCod) { this.prodCod = prodCod; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
