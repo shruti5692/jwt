@@ -1,0 +1,26 @@
+src/main/java/org/example/auth/AuthController.java
+
+package org.example.auth;
+
+import org.example.security.JwtService;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    private final JwtService jwtService;
+
+    public AuthController(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestParam String username, @RequestParam String password) {
+        // very simple: accept only demo/pass
+        if ("demo".equals(username) && "pass".equals(password)) {
+            return jwtService.generateToken(username);
+        }
+        return "Invalid credentials";
+    }
+}
