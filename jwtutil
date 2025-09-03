@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET = "mysecretkeymysecretkeymysecretkey123"; // keep 32+ chars
+    private static final String SECRET = "82a55e85d686b215008086e8a57beb990e60f87a6d993339efb49daffd232b93"; // keep 32+ chars
     private static final long EXPIRATION_TIME = 86400000; // 1 day
 
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
