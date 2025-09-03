@@ -16,6 +16,13 @@ import java.util.Collections;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
+    private final JwtUtil jwtUtil;
+
+    // ✅ Inject JwtUtil via constructor
+    public JwtFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -26,15 +33,18 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwt = authHeader.substring(7);
+
             try {
-                String username = JwtUtil.validateToken(jwt);
+                if (jwtUtil.validateToken(jwt)) {  // ✅ use injected bean
+                    String username = jwtUtil.extractUsername(jwt);
 
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("Invalid JWT: " + e.getMessage());
