@@ -1,0 +1,33 @@
+package tests;
+
+import base.BaseTest;
+import io.restassured.http.ContentType;
+import models.User;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import utils.ExcelUtils;
+
+import static io.restassured.RestAssured.given;
+
+public class RegisterAPITest extends BaseTest {
+
+    @DataProvider(name = "registerData")
+    public Object[][] registerDataProvider() {
+        String filePath = "src/test/resources/testdata.xlsx";
+        var dataList = ExcelUtils.getData(filePath, "RegisterData");
+        return dataList.toArray(new Object[0][0]);
+    }
+
+    @Test(dataProvider = "registerData")
+    public void testRegister(String username, String password) {
+        User user = new User(username, password);
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(user)
+        .when()
+            .post("/auth/register")
+        .then()
+            .statusCode(200); // expecting registration success
+    }
+}
