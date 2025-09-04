@@ -15,6 +15,17 @@ public class SecurityConfig {
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
+    
+    @Bean
+public AuthenticationManager authManager(HttpSecurity http, PasswordEncoder passwordEncoder,
+                                         UserDetailsService userDetailsService) throws Exception {
+    return http.getSharedObject(AuthenticationManagerBuilder.class)
+            .userDetailsService(userDetailsService)
+            .passwordEncoder(passwordEncoder)
+            .and()
+            .build();
+}
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

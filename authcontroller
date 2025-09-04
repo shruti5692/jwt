@@ -33,10 +33,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-        );
-        return jwtUtil.generateToken(user.getUsername());
-    }
+public String login(@RequestBody User user) {
+    authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+    );
+
+    // If no exception, user is authenticated → generate JWT
+    return jwtUtil.generateToken(user.getUsername());
+}
+
 }
