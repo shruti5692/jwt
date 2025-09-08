@@ -5,6 +5,7 @@ import io.restassured.response.Response;
 
 public class BaseTest {
 
+    // Login helper to get JWT token
     protected String getAuthToken(String baseUrl, String username, String password) {
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
@@ -13,9 +14,6 @@ public class BaseTest {
                 .when()
                 .post("/auth/login");
 
-        System.out.println("Login Response: " + response.asString());
-
-        // Since login API returns plain JWT string
         return response.asString().replace("\"", "").trim();
     }
 }

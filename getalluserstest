@@ -1,8 +1,9 @@
 package tests;
 
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 import utils.XLUtility;
 
 public class GetAllUsersTest extends BaseTest {
@@ -17,13 +18,9 @@ public class GetAllUsersTest extends BaseTest {
                                 String expectedResult,
                                 int rowIndex) {
 
-        System.out.println("Running GetAllUsers test -> " + testName);
-
-        // Get JWT token dynamically
         String token = getAuthToken(baseUrl, username, password);
 
-        // Call API with token
-        Response response = io.restassured.RestAssured.given()
+        Response response = RestAssured.given()
                 .baseUri(baseUrl)
                 .header("Authorization", "Bearer " + token)
                 .when()
@@ -32,8 +29,6 @@ public class GetAllUsersTest extends BaseTest {
                 .extract()
                 .response();
 
-        System.out.println("Response: " + response.asString());
-
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
@@ -41,22 +36,11 @@ public class GetAllUsersTest extends BaseTest {
                 response.then().statusCode(403);
             }
 
-            // Write PASS in Excel
-            try {
-                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
-            } catch (Exception io) {
-                io.printStackTrace(); // log Excel write issue
-            }
-
+            XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
         } catch (AssertionError e) {
-            // Write FAIL in Excel
-            try {
-                XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
-            } catch (Exception io) {
-                io.printStackTrace(); // log Excel write issue
-            }
-            throw e; // rethrow so TestNG reports failure
-        }
+            try { XLUtility.setCellData("Tests", rowIndex, 7, "FAIL"); } catch (Exception ignored) {}
+            throw e;
+        } catch (Exception io) { io.printStackTrace(); }
     }
 
     @DataProvider

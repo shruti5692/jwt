@@ -11,12 +11,7 @@ public class AuthAPITest {
     public void testRegister(String testType, String testName, String baseUrl, String endpoint,
                              String username, String password, String expectedResult, int rowIndex) {
 
-        // Run only Register tests
-        if (!"Register".equalsIgnoreCase(testType)) {
-            return;
-        }
-
-        System.out.println("Running " + testType + " test -> " + testName);
+        if (!"Register".equalsIgnoreCase(testType)) return;
 
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
@@ -25,18 +20,16 @@ public class AuthAPITest {
                 .when()
                 .post(endpoint);
 
-        System.out.println("Response: " + response.asString());
-
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
             } else {
                 response.then().statusCode(400);
             }
-            XLUtility.setCellData("Tests", rowIndex, 6, "PASS"); // Column F = Result
+            XLUtility.setCellData("Tests", rowIndex, 6, "PASS");
         } catch (AssertionError e) {
-            XLUtility.setCellData("Tests", rowIndex, 6, "FAIL");
+            try { XLUtility.setCellData("Tests", rowIndex, 6, "FAIL"); } catch (Exception ignored) {}
             throw e;
-        }
+        } catch (Exception io) { io.printStackTrace(); }
     }
 }

@@ -2,7 +2,6 @@ package utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.testng.annotations.DataProvider;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,76 +9,43 @@ import java.io.IOException;
 
 public class XLUtility {
 
-    private static final String filePath = System.getProperty("user.dir") + "/src/test/resources/TestData.xlsx";
+    private static String path = "testdata.xlsx";
 
-    // Count rows in a sheet
-    public static int getRowCount(String sheetName) throws IOException {
-        try (FileInputStream fis = new FileInputStream(filePath);
-             Workbook workbook = new XSSFWorkbook(fis)) {
-            Sheet sheet = workbook.getSheet(sheetName);
-            return sheet.getLastRowNum();
-        }
-    }
+    public static Object[][] getTestData(String sheetName) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
+        Workbook wb = new XSSFWorkbook(fis);
+        Sheet sheet = wb.getSheet(sheetName);
+        int rowCount = sheet.getLastRowNum(); 
+        int colCount = sheet.getRow(0).getLastCellNum();
 
-    // Count cells in a row
-    public static int getCellCount(String sheetName, int rowNum) throws IOException {
-        try (FileInputStream fis = new FileInputStream(filePath);
-             Workbook workbook = new XSSFWorkbook(fis)) {
-            Sheet sheet = workbook.getSheet(sheetName);
-            Row row = sheet.getRow(rowNum);
-            return row.getLastCellNum();
-        }
-    }
-
-    // Get cell data
-    public static String getCellData(String sheetName, int rowNum, int colNum) throws IOException {
-        try (FileInputStream fis = new FileInputStream(filePath);
-             Workbook workbook = new XSSFWorkbook(fis)) {
-            Sheet sheet = workbook.getSheet(sheetName);
-            Row row = sheet.getRow(rowNum);
-            if (row == null) return "";
-            Cell cell = row.getCell(colNum);
-            if (cell == null) return "";
-
-            DataFormatter formatter = new DataFormatter();
-            return formatter.formatCellValue(cell);
-        }
-    }
-
-    // Write cell data
-    public static void setCellData(String sheetName, int rowNum, int colNum, String data) throws IOException {
-        FileInputStream fis = new FileInputStream(filePath);
-        Workbook workbook = new XSSFWorkbook(fis);
-        Sheet sheet = workbook.getSheet(sheetName);
-        Row row = sheet.getRow(rowNum);
-        if (row == null) row = sheet.createRow(rowNum);
-
-        Cell cell = row.getCell(colNum);
-        if (cell == null) cell = row.createCell(colNum);
-
-        cell.setCellValue(data);
-
-        FileOutputStream fos = new FileOutputStream(filePath);
-        workbook.write(fos);
-        workbook.close();
-        fos.close();
-        fis.close();
-    }
-
-    // ✅ DataProvider (reads all rows and adds rowIndex at the end)
-    @DataProvider(name = "testData")
-    public static Object[][] getTestData() throws Exception {
-        int rowCount = getRowCount("Tests");
-        int colCount = getCellCount("Tests", 0);
-
-        Object[][] data = new Object[rowCount][colCount + 1]; // +1 for rowIndex
+        Object[][] data = new Object[rowCount][colCount];
 
         for (int i = 1; i <= rowCount; i++) {
+            Row row = sheet.getRow(i);
             for (int j = 0; j < colCount; j++) {
-                data[i - 1][j] = getCellData("Tests", i, j);
+                Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                data[i - 1][j] = cell.toString().trim();
             }
-            data[i - 1][colCount] = i; // ✅ store rowIndex as last column
         }
+
+        wb.close();
+        fis.close();
         return data;
+    }
+
+    public static void setCellData(String sheetName, int rowNum, int colNum, String value) throws IOException {
+        FileInputStream fis = new FileInputStream(path);
+        Workbook wb = new XSSFWorkbook(fis);
+        Sheet sheet = wb.getSheet(sheetName);
+        Row row = sheet.getRow(rowNum);
+        if (row == null) row = sheet.createRow(rowNum);
+        Cell cell = row.getCell(colNum, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+        cell.setCellValue(value);
+        fis.close();
+
+        FileOutputStream fos = new FileOutputStream(path);
+        wb.write(fos);
+        wb.close();
+        fos.close();
     }
 }
