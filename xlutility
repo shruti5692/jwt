@@ -3,45 +3,39 @@ package utils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class XLUtility {
-    private static final String FILE_PATH = "testdata.xlsx";
+    private static final String filePath = "src/test/resources/testdata.xlsx";
 
-    // Read all rows as Object[][]
+    // Read test data
     public static Object[][] getTestData(String sheetName) throws IOException {
-        FileInputStream fis = new FileInputStream(FILE_PATH);
+        FileInputStream fis = new FileInputStream(filePath);
         Workbook workbook = new XSSFWorkbook(fis);
         Sheet sheet = workbook.getSheet(sheetName);
 
         int rowCount = sheet.getPhysicalNumberOfRows();
         int colCount = sheet.getRow(0).getPhysicalNumberOfCells();
 
-        List<Object[]> data = new ArrayList<>();
-        Iterator<Row> rowIterator = sheet.iterator();
-        rowIterator.next(); // skip header row
+        Object[][] data = new Object[rowCount - 1][colCount];
 
-        while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-            Object[] rowData = new Object[colCount];
-            for (int c = 0; c < colCount; c++) {
-                Cell cell = row.getCell(c, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                rowData[c] = getCellValue(cell);
+        for (int i = 1; i < rowCount; i++) {
+            Row row = sheet.getRow(i);
+            for (int j = 0; j < colCount; j++) {
+                Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                data[i - 1][j] = cell.toString();
             }
-            data.add(rowData);
         }
-
         workbook.close();
         fis.close();
-        return data.toArray(new Object[0][]);
+        return data;
     }
 
-    // Write PASS/FAIL result back to Excel
+    // Write result
     public static void setCellData(String sheetName, int rowNum, int colNum, String data) throws IOException {
-        FileInputStream fis = new FileInputStream(FILE_PATH);
+        FileInputStream fis = new FileInputStream(filePath);
         Workbook workbook = new XSSFWorkbook(fis);
         Sheet sheet = workbook.getSheet(sheetName);
 
@@ -52,20 +46,9 @@ public class XLUtility {
         cell.setCellValue(data);
 
         fis.close();
-
-        FileOutputStream fos = new FileOutputStream(FILE_PATH);
+        FileOutputStream fos = new FileOutputStream(filePath);
         workbook.write(fos);
         workbook.close();
         fos.close();
-    }
-
-    private static Object getCellValue(Cell cell) {
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue();
-            case NUMERIC -> (int) cell.getNumericCellValue();
-            case BOOLEAN -> cell.getBooleanCellValue();
-            case BLANK -> "";
-            default -> "";
-        };
     }
 }

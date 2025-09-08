@@ -8,36 +8,47 @@ import utils.XLUtility;
 
 public class GetAllUsersTest extends BaseTest {
 
-    @DataProvider(name = "UserData")
-    public Object[][] getData() throws Exception {
+    @DataProvider(name = "testData")
+    public Object[][] getTestData() throws Exception {
         return XLUtility.getTestData("Tests");
     }
 
-    @Test(dataProvider = "UserData")
-    public void testGetAllUsers(String testType, String testName, String baseUrl,
-                                String endpoint, String username, String password,
-                                String expectedResult, String status, int rowIndex) throws Exception {
+    @Test(dataProvider = "testData")
+    public void testGetAllUsers(
+            String testType,
+            String testName,
+            String baseUrl,
+            String endpoint,
+            String username,
+            String password,
+            String expectedResult,
+            String status,
+            String rowIndexStr
+    ) throws Exception {
 
-        if (!"GetAllUsers".equalsIgnoreCase(testType)) return; // skip other tests
+        int rowIndex = Integer.parseInt(rowIndexStr);
 
-        System.out.println("Running GetAllUsers test -> " + testName);
+        if (!"GetAllUsers".equalsIgnoreCase(testType)) {
+            return; // skip if not this test
+        }
 
         String token = getAuthToken(baseUrl, username, password);
 
         Response response = RestAssured.given()
+                .baseUri(baseUrl)
                 .header("Authorization", "Bearer " + token)
-                .get(baseUrl + endpoint);
+                .when()
+                .get(endpoint);
 
-        System.out.println("Response: " + response.asString());
+        System.out.println("GetAllUsers Response: " + response.asString());
 
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
-                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             } else {
                 response.then().statusCode(403);
-                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             }
+            XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
         } catch (AssertionError e) {
             XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
             throw e;

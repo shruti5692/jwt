@@ -4,17 +4,27 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 
 public class BaseTest {
-    protected String getAuthToken(String baseUrl, String username, String password) {
-        Response response = RestAssured.given()
-                .contentType("application/json")
-                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
-                .post(baseUrl + "/auth/login");
 
-        if (response.statusCode() == 200) {
-            return response.getBody().asString(); // JWT returned directly as string
-        } else {
-            throw new RuntimeException("Failed to authenticate user: " + username +
-                    " Response: " + response.asString());
+    protected static String authToken;
+
+    // Generate and cache JWT token
+    protected String getAuthToken(String baseUrl, String username, String password) {
+        if (authToken == null) {
+            Response response = RestAssured.given()
+                    .baseUri(baseUrl)
+                    .contentType("application/json")
+                    .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
+                    .when()
+                    .post("/auth/login");
+
+            System.out.println("Login Response: " + response.asString());
+
+            if (response.statusCode() == 200) {
+                authToken = response.jsonPath().getString("token");
+            } else {
+                throw new RuntimeException("Failed to authenticate, status: " + response.statusCode());
+            }
         }
+        return authToken;
     }
 }

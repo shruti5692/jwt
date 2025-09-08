@@ -2,42 +2,52 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import utils.XLUtility;
 
 public class AuthAPITest extends BaseTest {
 
-    @DataProvider(name = "AuthData")
-    public Object[][] getData() throws Exception {
+    @DataProvider(name = "testData")
+    public Object[][] getTestData() throws Exception {
         return XLUtility.getTestData("Tests");
     }
 
-    @Test(dataProvider = "AuthData")
-    public void testRegister(String testType, String testName, String baseUrl,
-                             String endpoint, String username, String password,
-                             String expectedResult, String status, int rowIndex) throws Exception {
+    @Test(dataProvider = "testData")
+    public void testRegister(
+            String testType,
+            String testName,
+            String baseUrl,
+            String endpoint,
+            String username,
+            String password,
+            String expectedResult,
+            String status,
+            String rowIndexStr   // ← comes from Excel, but we’ll convert below
+    ) throws Exception {
 
-        if (!"Register".equalsIgnoreCase(testType)) return; // skip non-register tests
+        int rowIndex = Integer.parseInt(rowIndexStr);
 
-        System.out.println("Running Register test -> " + testName);
+        if (!"Register".equalsIgnoreCase(testType)) {
+            return; // skip if not Register test
+        }
 
         Response response = RestAssured.given()
+                .baseUri(baseUrl)
                 .contentType("application/json")
                 .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
-                .post(baseUrl + endpoint);
+                .when()
+                .post(endpoint);
 
-        System.out.println("Response: " + response.asString());
+        System.out.println("Register Response: " + response.asString());
 
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
-                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             } else {
                 response.then().statusCode(403);
-                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             }
+            XLUtility.setCellData("Tests", rowIndex, 7, "PASS"); // Status col
         } catch (AssertionError e) {
             XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
             throw e;
