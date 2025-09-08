@@ -1,6 +1,5 @@
 package tests;
 
-import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
@@ -9,28 +8,23 @@ import org.testng.annotations.Test;
 public class GetAllUsersTest extends BaseTest {
 
     @Test(dataProvider = "getAllUsersData")
-    public void testGetAllUsers(String testName, String baseUrl, String endpoint) throws Exception {
-
+    public void testGetAllUsers(String testType, String testName, String baseUrl, String endpoint,
+                                String username, String password, String result, int rowIndex) throws Exception {
         System.out.println("Running GetAllUsers test -> " + testName);
 
-        Response response = RestAssured
-                .given()
+        Response response = RestAssured.given()
                 .baseUri(baseUrl)
                 .when()
                 .get(endpoint)
                 .then()
-                .extract()
-                .response();
+                .statusCode(200)
+                .extract().response();
 
         System.out.println("Response: " + response.asString());
 
-        int rowIndex = excel.findRowIndexByTestName("Tests", testName);
-        if (rowIndex != -1) {
-            excel.setCellData("Tests", rowIndex, 6, response.statusCode() == 200 ? "PASS" : "FAIL"); // Column G = Result
-        } else {
-            System.out.println("TestName not found in Excel: " + testName);
-        }
+        String actualResult = response.asString().contains("id") ? "PASS" : "FAIL";
+        excel.setCellData("Tests", rowIndex, 6, actualResult); // write in Result col (G)
 
-        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertEquals(actualResult, "PASS");
     }
 }
