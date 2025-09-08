@@ -1,39 +1,51 @@
-package tests;
+package base;
 
 import org.testng.annotations.DataProvider;
 import utils.XLUtility;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BaseTest {
-    protected static XLUtility excel = new XLUtility("testdata.xlsx");
 
+    protected static XLUtility excel;
+
+    static {
+        try {
+            excel = new XLUtility("testdata.xlsx");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // DataProvider for Register test
     @DataProvider(name = "registerData")
     public Object[][] getRegisterData() throws Exception {
-        return getDataFromExcel("Register");
+        return getDataFromExcel("Register", new int[]{1, 2, 3, 4, 5, 6}); // Columns for testType, testName, baseUrl, endpoint, username, password
     }
 
+    // DataProvider for GetAllUsers test
     @DataProvider(name = "getAllUsersData")
     public Object[][] getAllUsersData() throws Exception {
-        return getDataFromExcel("GetAllUsers");
+        return getDataFromExcel("GetAllUsers", new int[]{1, 2, 3}); // Columns for testName, baseUrl, endpoint
     }
 
-    protected Object[][] getDataFromExcel(String testType) throws Exception {
+    // Generic method to get only needed columns
+    protected Object[][] getDataFromExcel(String testType, int[] colIndices) throws Exception {
         int rowCount = excel.getRowCount("Tests");
-        int colCount = excel.getCellCount("Tests", 1);
-
         List<Object[]> dataList = new ArrayList<>();
 
         for (int i = 1; i <= rowCount; i++) {
-            String type = excel.getCellData("Tests", i, 0); // column A = TestType
+            String type = excel.getCellData("Tests", i, 0); // Column A = TestType
             if (type.equalsIgnoreCase(testType)) {
-                Object[] rowData = new Object[colCount + 1];
-                for (int j = 0; j < colCount; j++) {
-                    rowData[j] = excel.getCellData("Tests", i, j);
+                Object[] rowData = new Object[colIndices.length];
+                for (int j = 0; j < colIndices.length; j++) {
+                    rowData[j] = excel.getCellData("Tests", i, colIndices[j]);
                 }
-                rowData[colCount] = i; // rowIndex for writing result
                 dataList.add(rowData);
             }
         }
+
         return dataList.toArray(new Object[0][]);
     }
 }

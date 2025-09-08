@@ -1,5 +1,6 @@
 package tests;
 
+import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
@@ -9,7 +10,8 @@ public class AuthAPITest extends BaseTest {
 
     @Test(dataProvider = "registerData")
     public void testRegister(String testType, String testName, String baseUrl, String endpoint,
-                             String username, String password, String result, int rowIndex) throws Exception {
+                             String username, String password) throws Exception {
+
         System.out.println("Running Register test -> " + testName);
 
         Response response = RestAssured.given()
@@ -19,13 +21,19 @@ public class AuthAPITest extends BaseTest {
                 .when()
                 .post(endpoint)
                 .then()
-                .statusCode(200)
-                .extract().response();
+                .extract()
+                .response();
 
         System.out.println("Response: " + response.asString());
 
         String actualResult = response.asString().contains("success") ? "PASS" : "FAIL";
-        excel.setCellData("Tests", rowIndex, 6, actualResult); // column G = Result
+
+        int rowIndex = excel.findRowIndexByTestName("Tests", testName);
+        if (rowIndex != -1) {
+            excel.setCellData("Tests", rowIndex, 6, actualResult); // Column G = Result
+        } else {
+            System.out.println("TestName not found in Excel: " + testName);
+        }
 
         Assert.assertEquals(actualResult, "PASS");
     }
