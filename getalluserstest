@@ -2,20 +2,44 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.testng.annotations.Test;
+import utils.XLUtility;
 
-public class BaseTest {
+public class GetAllUsersTest extends BaseTest {
 
-    protected String getAuthToken(String baseUrl, String username, String password) {
+    @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
+    public void testGetAllUsers(String testType, String testName, String baseUrl, String endpoint,
+                                String username, String password, String expectedResult, int rowIndex) {
+
+        // Run only GetAllUsers tests
+        if (!"GetAllUsers".equalsIgnoreCase(testType)) {
+            return;
+        }
+
+        System.out.println("Running " + testType + " test -> " + testName);
+
+        // Get JWT token dynamically using login API
+        String token = getAuthToken(baseUrl, username, password);
+        System.out.println("Login Response: " + token);
+
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
-                .contentType("application/json")
-                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
+                .header("Authorization", "Bearer " + token)
                 .when()
-                .post("/auth/login");
+                .get(endpoint);
 
-        System.out.println("Login Response: " + response.asString());
+        System.out.println("Response: " + response.asString());
 
-        // Since login API returns plain JWT string
-        return response.asString().replace("\"", "").trim();
+        try {
+            if ("PASS".equalsIgnoreCase(expectedResult)) {
+                response.then().statusCode(200);
+            } else {
+                response.then().statusCode(403);
+            }
+            XLUtility.setCellData("Tests", rowIndex, 6, "PASS");
+        } catch (AssertionError e) {
+            XLUtility.setCellData("Tests", rowIndex, 6, "FAIL");
+            throw e;
+        }
     }
 }
