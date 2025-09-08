@@ -2,34 +2,45 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import utils.XLUtility;
 
-public class AuthAPITest {
+public class AuthAPITest extends BaseTest {
 
-    @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
-    public void testRegister(String testType, String testName, String baseUrl, String endpoint,
-                             String username, String password, String expectedResult, int rowIndex) {
+    @DataProvider(name = "AuthData")
+    public Object[][] getData() throws Exception {
+        return XLUtility.getTestData("Tests");
+    }
 
-        if (!"Register".equalsIgnoreCase(testType)) return;
+    @Test(dataProvider = "AuthData")
+    public void testRegister(String testType, String testName, String baseUrl,
+                             String endpoint, String username, String password,
+                             String expectedResult, String status, int rowIndex) throws Exception {
+
+        if (!"Register".equalsIgnoreCase(testType)) return; // skip non-register tests
+
+        System.out.println("Running Register test -> " + testName);
 
         Response response = RestAssured.given()
-                .baseUri(baseUrl)
                 .contentType("application/json")
                 .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
-                .when()
-                .post(endpoint);
+                .post(baseUrl + endpoint);
+
+        System.out.println("Response: " + response.asString());
 
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
+                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             } else {
-                response.then().statusCode(400);
+                response.then().statusCode(403);
+                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             }
-            XLUtility.setCellData("Tests", rowIndex, 6, "PASS");
         } catch (AssertionError e) {
-            try { XLUtility.setCellData("Tests", rowIndex, 6, "FAIL"); } catch (Exception ignored) {}
+            XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
             throw e;
-        } catch (Exception io) { io.printStackTrace(); }
+        }
     }
 }

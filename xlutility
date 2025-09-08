@@ -3,49 +3,69 @@ package utils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class XLUtility {
+    private static final String FILE_PATH = "testdata.xlsx";
 
-    private static String path = "testdata.xlsx";
-
+    // Read all rows as Object[][]
     public static Object[][] getTestData(String sheetName) throws IOException {
-        FileInputStream fis = new FileInputStream(path);
-        Workbook wb = new XSSFWorkbook(fis);
-        Sheet sheet = wb.getSheet(sheetName);
-        int rowCount = sheet.getLastRowNum(); 
-        int colCount = sheet.getRow(0).getLastCellNum();
+        FileInputStream fis = new FileInputStream(FILE_PATH);
+        Workbook workbook = new XSSFWorkbook(fis);
+        Sheet sheet = workbook.getSheet(sheetName);
 
-        Object[][] data = new Object[rowCount][colCount];
+        int rowCount = sheet.getPhysicalNumberOfRows();
+        int colCount = sheet.getRow(0).getPhysicalNumberOfCells();
 
-        for (int i = 1; i <= rowCount; i++) {
-            Row row = sheet.getRow(i);
-            for (int j = 0; j < colCount; j++) {
-                Cell cell = row.getCell(j, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                data[i - 1][j] = cell.toString().trim();
+        List<Object[]> data = new ArrayList<>();
+        Iterator<Row> rowIterator = sheet.iterator();
+        rowIterator.next(); // skip header row
+
+        while (rowIterator.hasNext()) {
+            Row row = rowIterator.next();
+            Object[] rowData = new Object[colCount];
+            for (int c = 0; c < colCount; c++) {
+                Cell cell = row.getCell(c, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                rowData[c] = getCellValue(cell);
             }
+            data.add(rowData);
         }
 
-        wb.close();
+        workbook.close();
         fis.close();
-        return data;
+        return data.toArray(new Object[0][]);
     }
 
-    public static void setCellData(String sheetName, int rowNum, int colNum, String value) throws IOException {
-        FileInputStream fis = new FileInputStream(path);
-        Workbook wb = new XSSFWorkbook(fis);
-        Sheet sheet = wb.getSheet(sheetName);
+    // Write PASS/FAIL result back to Excel
+    public static void setCellData(String sheetName, int rowNum, int colNum, String data) throws IOException {
+        FileInputStream fis = new FileInputStream(FILE_PATH);
+        Workbook workbook = new XSSFWorkbook(fis);
+        Sheet sheet = workbook.getSheet(sheetName);
+
         Row row = sheet.getRow(rowNum);
         if (row == null) row = sheet.createRow(rowNum);
+
         Cell cell = row.getCell(colNum, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-        cell.setCellValue(value);
+        cell.setCellValue(data);
+
         fis.close();
 
-        FileOutputStream fos = new FileOutputStream(path);
-        wb.write(fos);
-        wb.close();
+        FileOutputStream fos = new FileOutputStream(FILE_PATH);
+        workbook.write(fos);
+        workbook.close();
         fos.close();
+    }
+
+    private static Object getCellValue(Cell cell) {
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> (int) cell.getNumericCellValue();
+            case BOOLEAN -> cell.getBooleanCellValue();
+            case BLANK -> "";
+            default -> "";
+        };
     }
 }

@@ -4,16 +4,17 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 
 public class BaseTest {
-
-    // Login helper to get JWT token
     protected String getAuthToken(String baseUrl, String username, String password) {
         Response response = RestAssured.given()
-                .baseUri(baseUrl)
                 .contentType("application/json")
                 .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
-                .when()
-                .post("/auth/login");
+                .post(baseUrl + "/auth/login");
 
-        return response.asString().replace("\"", "").trim();
+        if (response.statusCode() == 200) {
+            return response.getBody().asString(); // JWT returned directly as string
+        } else {
+            throw new RuntimeException("Failed to authenticate user: " + username +
+                    " Response: " + response.asString());
+        }
     }
 }

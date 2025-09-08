@@ -8,43 +8,39 @@ import utils.XLUtility;
 
 public class GetAllUsersTest extends BaseTest {
 
-    @Test(dataProvider = "getTestData")
-    public void testGetAllUsers(String testType,
-                                String testName,
-                                String baseUrl,
-                                String endpoint,
-                                String username,
-                                String password,
-                                String expectedResult,
-                                int rowIndex) {
+    @DataProvider(name = "UserData")
+    public Object[][] getData() throws Exception {
+        return XLUtility.getTestData("Tests");
+    }
+
+    @Test(dataProvider = "UserData")
+    public void testGetAllUsers(String testType, String testName, String baseUrl,
+                                String endpoint, String username, String password,
+                                String expectedResult, String status, int rowIndex) throws Exception {
+
+        if (!"GetAllUsers".equalsIgnoreCase(testType)) return; // skip other tests
+
+        System.out.println("Running GetAllUsers test -> " + testName);
 
         String token = getAuthToken(baseUrl, username, password);
 
         Response response = RestAssured.given()
-                .baseUri(baseUrl)
                 .header("Authorization", "Bearer " + token)
-                .when()
-                .get(endpoint)
-                .then()
-                .extract()
-                .response();
+                .get(baseUrl + endpoint);
+
+        System.out.println("Response: " + response.asString());
 
         try {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
+                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             } else {
                 response.then().statusCode(403);
+                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
             }
-
-            XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
         } catch (AssertionError e) {
-            try { XLUtility.setCellData("Tests", rowIndex, 7, "FAIL"); } catch (Exception ignored) {}
+            XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
             throw e;
-        } catch (Exception io) { io.printStackTrace(); }
-    }
-
-    @DataProvider
-    public Object[][] getTestData() throws Exception {
-        return XLUtility.getTestData("Tests");
+        }
     }
 }
