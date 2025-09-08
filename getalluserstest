@@ -1,29 +1,36 @@
 package tests;
 
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
 import utils.XLUtility;
 
-public class AuthAPITest {
+public class GetAllUsersTest extends BaseTest {
 
-    @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
-    public void testRegister(String testType, String testName, String baseUrl, String endpoint,
-                             String username, String password, String expectedResult, int rowIndex) {
+    @Test(dataProvider = "getTestData")
+    public void testGetAllUsers(String testType,
+                                String testName,
+                                String baseUrl,
+                                String endpoint,
+                                String username,
+                                String password,
+                                String expectedResult,
+                                int rowIndex) {
 
-        // Run only Register tests
-        if (!"Register".equalsIgnoreCase(testType)) {
-            return;
-        }
+        System.out.println("Running GetAllUsers test -> " + testName);
 
-        System.out.println("Running " + testType + " test -> " + testName);
+        // Get JWT token dynamically
+        String token = getAuthToken(baseUrl, username, password);
 
-        Response response = RestAssured.given()
+        // Call API with token
+        Response response = io.restassured.RestAssured.given()
                 .baseUri(baseUrl)
-                .contentType("application/json")
-                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
+                .header("Authorization", "Bearer " + token)
                 .when()
-                .post(endpoint);
+                .get(endpoint)
+                .then()
+                .extract()
+                .response();
 
         System.out.println("Response: " + response.asString());
 
@@ -31,12 +38,29 @@ public class AuthAPITest {
             if ("PASS".equalsIgnoreCase(expectedResult)) {
                 response.then().statusCode(200);
             } else {
-                response.then().statusCode(400);
+                response.then().statusCode(403);
             }
-            XLUtility.setCellData("Tests", rowIndex, 6, "PASS"); // Column F = Result
+
+            // Write PASS in Excel
+            try {
+                XLUtility.setCellData("Tests", rowIndex, 7, "PASS");
+            } catch (Exception io) {
+                io.printStackTrace(); // log Excel write issue
+            }
+
         } catch (AssertionError e) {
-            XLUtility.setCellData("Tests", rowIndex, 6, "FAIL");
-            throw e;
+            // Write FAIL in Excel
+            try {
+                XLUtility.setCellData("Tests", rowIndex, 7, "FAIL");
+            } catch (Exception io) {
+                io.printStackTrace(); // log Excel write issue
+            }
+            throw e; // rethrow so TestNG reports failure
         }
+    }
+
+    @DataProvider
+    public Object[][] getTestData() throws Exception {
+        return XLUtility.getTestData("Tests");
     }
 }
