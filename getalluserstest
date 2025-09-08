@@ -2,30 +2,20 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.testng.annotations.Test;
 
-public class GetAllUsersTest extends BaseTest {
+public class BaseTest {
 
-    @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
-    public void testGetAllUsers(String testType, String testName, String baseUrl, String endpoint,
-                                String username, String password, String expectedResult, int rowIndex) {
-
-        System.out.println("Running " + testType + " test -> " + testName);
-
-        String token = getAuthToken(baseUrl, username, password);
-
+    protected String getAuthToken(String baseUrl, String username, String password) {
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
-                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
                 .when()
-                .get(endpoint);
+                .post("/auth/login");
 
-        System.out.println("Response: " + response.asString());
+        System.out.println("Login Response: " + response.asString());
 
-        if ("PASS".equalsIgnoreCase(expectedResult)) {
-            response.then().statusCode(200);
-        } else {
-            response.then().statusCode(403);
-        }
+        // Since login API returns plain JWT string
+        return response.asString().replace("\"", "").trim();
     }
 }

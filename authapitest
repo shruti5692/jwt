@@ -3,15 +3,17 @@ package tests;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.annotations.Test;
+import utils.XLUtility;
 
-public class AuthAPITest extends BaseTest {
+public class AuthAPITest {
 
     @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
     public void testRegister(String testType, String testName, String baseUrl, String endpoint,
                              String username, String password, String expectedResult, int rowIndex) {
 
+        // Run only Register tests
         if (!"Register".equalsIgnoreCase(testType)) {
-            return; // skip if row is not Register
+            return;
         }
 
         System.out.println("Running " + testType + " test -> " + testName);
@@ -25,10 +27,16 @@ public class AuthAPITest extends BaseTest {
 
         System.out.println("Response: " + response.asString());
 
-        if ("PASS".equalsIgnoreCase(expectedResult)) {
-            response.then().statusCode(200);
-        } else {
-            response.then().statusCode(400);
+        try {
+            if ("PASS".equalsIgnoreCase(expectedResult)) {
+                response.then().statusCode(200);
+            } else {
+                response.then().statusCode(400);
+            }
+            XLUtility.setCellData("Tests", rowIndex, 6, "PASS"); // Column F = Result
+        } catch (AssertionError e) {
+            XLUtility.setCellData("Tests", rowIndex, 6, "FAIL");
+            throw e;
         }
     }
 }
