@@ -1,40 +1,36 @@
 package tests;
 
-import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import utils.XLUtility;
 
 public class AuthAPITest extends BaseTest {
 
-    @Test(dataProvider = "registerData")
-    public void testRegister(String testType, String testName, String baseUrl, String endpoint,
-                             String username, String password) throws Exception {
+    @Test(dataProvider = "getRegisterData", dataProviderClass = XLUtility.class)
+    public void testRegister(String testType, String testName, String baseUrl,
+                             String endpoint, String username, String password,
+                             String expectedResult, int rowIndex) throws Exception {
 
         System.out.println("Running Register test -> " + testName);
 
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
                 .contentType("application/json")
-                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
+                .body("{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }")
                 .when()
                 .post(endpoint)
                 .then()
-                .extract()
-                .response();
+                .extract().response();
 
         System.out.println("Response: " + response.asString());
 
-        String actualResult = response.asString().contains("success") ? "PASS" : "FAIL";
+        boolean status = response.statusCode() == 200;
+        String result = status ? "PASS" : "FAIL";
 
-        int rowIndex = excel.findRowIndexByTestName("Tests", testName);
-        if (rowIndex != -1) {
-            excel.setCellData("Tests", rowIndex, 6, actualResult); // Column G = Result
-        } else {
-            System.out.println("TestName not found in Excel: " + testName);
-        }
+        XLUtility.setCellData("Tests", rowIndex, 6, result);
 
-        Assert.assertEquals(actualResult, "PASS");
+        Assert.assertEquals(result, expectedResult, "Register API test failed!");
     }
 }

@@ -1,51 +1,22 @@
-package base;
+package tests;
 
-import org.testng.annotations.DataProvider;
-import utils.XLUtility;
-
-import java.util.ArrayList;
-import java.util.List;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 
 public class BaseTest {
 
-    protected static XLUtility excel;
+    // Login and return JWT
+    public String getAuthToken(String baseUrl, String username, String password) {
+        Response loginResponse = RestAssured.given()
+                .baseUri(baseUrl)
+                .contentType("application/json")
+                .body("{ \"username\": \"" + username + "\", \"password\": \"" + password + "\" }")
+                .when()
+                .post("/auth/login")
+                .then()
+                .statusCode(200)
+                .extract().response();
 
-    static {
-        try {
-            excel = new XLUtility("testdata.xlsx");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // DataProvider for Register test
-    @DataProvider(name = "registerData")
-    public Object[][] getRegisterData() throws Exception {
-        return getDataFromExcel("Register", new int[]{1, 2, 3, 4, 5, 6}); // Columns for testType, testName, baseUrl, endpoint, username, password
-    }
-
-    // DataProvider for GetAllUsers test
-    @DataProvider(name = "getAllUsersData")
-    public Object[][] getAllUsersData() throws Exception {
-        return getDataFromExcel("GetAllUsers", new int[]{1, 2, 3}); // Columns for testName, baseUrl, endpoint
-    }
-
-    // Generic method to get only needed columns
-    protected Object[][] getDataFromExcel(String testType, int[] colIndices) throws Exception {
-        int rowCount = excel.getRowCount("Tests");
-        List<Object[]> dataList = new ArrayList<>();
-
-        for (int i = 1; i <= rowCount; i++) {
-            String type = excel.getCellData("Tests", i, 0); // Column A = TestType
-            if (type.equalsIgnoreCase(testType)) {
-                Object[] rowData = new Object[colIndices.length];
-                for (int j = 0; j < colIndices.length; j++) {
-                    rowData[j] = excel.getCellData("Tests", i, colIndices[j]);
-                }
-                dataList.add(rowData);
-            }
-        }
-
-        return dataList.toArray(new Object[0][]);
+        return loginResponse.jsonPath().getString("token");
     }
 }

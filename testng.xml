@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
-<suite name="TestSuite" parallel="false">
-    <test name="API Tests">
+<suite name="TestSuite">
+    <test name="APITests">
         <classes>
             <class name="tests.AuthAPITest"/>
             <class name="tests.GetAllUsersTest"/>
