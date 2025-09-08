@@ -1,50 +1,39 @@
-package base;
+package tests;
 
 import org.testng.annotations.DataProvider;
 import utils.XLUtility;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class BaseTest {
-    String path = "testdata.xlsx"; // keep file in project root
+    protected static XLUtility excel = new XLUtility("testdata.xlsx");
 
     @DataProvider(name = "registerData")
-    public Object[][] getRegisterData() throws IOException {
-        XLUtility xl = new XLUtility(path);
-        int rowCount = xl.getRowCount("Sheet1");
-        List<Object[]> data = new ArrayList<>();
-
-        for (int i = 1; i <= rowCount; i++) {
-            String testType = xl.getCellData("Sheet1", i, 0);
-            if ("Register".equalsIgnoreCase(testType)) {
-                String testName = xl.getCellData("Sheet1", i, 1);
-                String baseUrl = xl.getCellData("Sheet1", i, 2);
-                String endpoint = xl.getCellData("Sheet1", i, 3);
-                String username = xl.getCellData("Sheet1", i, 4);
-                String password = xl.getCellData("Sheet1", i, 5);
-                data.add(new Object[]{testName, baseUrl, endpoint, username, password, i});
-            }
-        }
-        return data.toArray(new Object[0][]);
+    public Object[][] getRegisterData() throws Exception {
+        return getDataFromExcel("Register");
     }
 
     @DataProvider(name = "getAllUsersData")
-    public Object[][] getAllUsersData() throws IOException {
-        XLUtility xl = new XLUtility(path);
-        int rowCount = xl.getRowCount("Sheet1");
-        List<Object[]> data = new ArrayList<>();
+    public Object[][] getAllUsersData() throws Exception {
+        return getDataFromExcel("GetAllUsers");
+    }
+
+    protected Object[][] getDataFromExcel(String testType) throws Exception {
+        int rowCount = excel.getRowCount("Tests");
+        int colCount = excel.getCellCount("Tests", 1);
+
+        List<Object[]> dataList = new ArrayList<>();
 
         for (int i = 1; i <= rowCount; i++) {
-            String testType = xl.getCellData("Sheet1", i, 0);
-            if ("GetAllUsers".equalsIgnoreCase(testType)) {
-                String testName = xl.getCellData("Sheet1", i, 1);
-                String baseUrl = xl.getCellData("Sheet1", i, 2);
-                String endpoint = xl.getCellData("Sheet1", i, 3);
-                data.add(new Object[]{testName, baseUrl, endpoint, i});
+            String type = excel.getCellData("Tests", i, 0); // column A = TestType
+            if (type.equalsIgnoreCase(testType)) {
+                Object[] rowData = new Object[colCount + 1];
+                for (int j = 0; j < colCount; j++) {
+                    rowData[j] = excel.getCellData("Tests", i, j);
+                }
+                rowData[colCount] = i; // rowIndex for writing result
+                dataList.add(rowData);
             }
         }
-        return data.toArray(new Object[0][]);
+        return dataList.toArray(new Object[0][]);
     }
 }

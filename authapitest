@@ -1,17 +1,15 @@
 package tests;
 
-import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import utils.XLUtility;
 
 public class AuthAPITest extends BaseTest {
 
     @Test(dataProvider = "registerData")
-    public void testRegister(String testName, String baseUrl, String endpoint,
-                             String username, String password, int rowIndex) throws Exception {
+    public void testRegister(String testType, String testName, String baseUrl, String endpoint,
+                             String username, String password, String result, int rowIndex) throws Exception {
         System.out.println("Running Register test -> " + testName);
 
         Response response = RestAssured.given()
@@ -21,17 +19,14 @@ public class AuthAPITest extends BaseTest {
                 .when()
                 .post(endpoint)
                 .then()
+                .statusCode(200)
                 .extract().response();
 
         System.out.println("Response: " + response.asString());
 
-        XLUtility xl = new XLUtility("testdata.xlsx");
-        if (response.statusCode() == 200) {
-            xl.setCellData("Sheet1", rowIndex, 6, "PASS");
-        } else {
-            xl.setCellData("Sheet1", rowIndex, 6, "FAIL");
-        }
+        String actualResult = response.asString().contains("success") ? "PASS" : "FAIL";
+        excel.setCellData("Tests", rowIndex, 6, actualResult); // column G = Result
 
-        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertEquals(actualResult, "PASS");
     }
 }
