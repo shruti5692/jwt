@@ -10,98 +10,75 @@ import java.io.IOException;
 
 public class XLUtility {
 
-    private static String filePath = "testdata.xlsx";
+    private static final String filePath = System.getProperty("user.dir") + "/src/test/resources/TestData.xlsx";
 
-    // Read cell value
-    public static String getCellData(String sheetName, int rowNum, int colNum) throws IOException {
-        FileInputStream fis = new FileInputStream(filePath);
-        Workbook wb = new XSSFWorkbook(fis);
-        Sheet sheet = wb.getSheet(sheetName);
-
-        Row row = sheet.getRow(rowNum);
-        Cell cell = row.getCell(colNum);
-
-        String data = "";
-        if (cell != null) {
-            cell.setCellType(CellType.STRING);
-            data = cell.getStringCellValue();
+    // Count rows in a sheet
+    public static int getRowCount(String sheetName) throws IOException {
+        try (FileInputStream fis = new FileInputStream(filePath);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            return sheet.getLastRowNum();
         }
-
-        wb.close();
-        fis.close();
-        return data;
     }
 
-    // Write cell value
-    public static void setCellData(String sheetName, int rowNum, int colNum, String value) throws IOException {
-        FileInputStream fis = new FileInputStream(filePath);
-        Workbook wb = new XSSFWorkbook(fis);
-        fis.close();
+    // Count cells in a row
+    public static int getCellCount(String sheetName, int rowNum) throws IOException {
+        try (FileInputStream fis = new FileInputStream(filePath);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            Row row = sheet.getRow(rowNum);
+            return row.getLastCellNum();
+        }
+    }
 
-        Sheet sheet = wb.getSheet(sheetName);
+    // Get cell data
+    public static String getCellData(String sheetName, int rowNum, int colNum) throws IOException {
+        try (FileInputStream fis = new FileInputStream(filePath);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            Row row = sheet.getRow(rowNum);
+            if (row == null) return "";
+            Cell cell = row.getCell(colNum);
+            if (cell == null) return "";
+
+            DataFormatter formatter = new DataFormatter();
+            return formatter.formatCellValue(cell);
+        }
+    }
+
+    // Write cell data
+    public static void setCellData(String sheetName, int rowNum, int colNum, String data) throws IOException {
+        FileInputStream fis = new FileInputStream(filePath);
+        Workbook workbook = new XSSFWorkbook(fis);
+        Sheet sheet = workbook.getSheet(sheetName);
         Row row = sheet.getRow(rowNum);
         if (row == null) row = sheet.createRow(rowNum);
 
         Cell cell = row.getCell(colNum);
         if (cell == null) cell = row.createCell(colNum);
 
-        cell.setCellValue(value);
+        cell.setCellValue(data);
 
         FileOutputStream fos = new FileOutputStream(filePath);
-        wb.write(fos);
-        wb.close();
+        workbook.write(fos);
+        workbook.close();
         fos.close();
-    }
-
-    // Get row count
-    private static int getRowCount(String sheetName) throws IOException {
-        FileInputStream fis = new FileInputStream(filePath);
-        Workbook wb = new XSSFWorkbook(fis);
-        Sheet sheet = wb.getSheet(sheetName);
-        int rowCount = sheet.getLastRowNum();
-        wb.close();
         fis.close();
-        return rowCount;
     }
 
-    // DataProvider for Register API
-    @DataProvider(name = "getRegisterData")
-    public static Object[][] getRegisterData() throws Exception {
-        String sheetName = "Tests";
-        int rowCount = getRowCount(sheetName);
+    // ✅ DataProvider (reads all rows and adds rowIndex at the end)
+    @DataProvider(name = "testData")
+    public static Object[][] getTestData() throws Exception {
+        int rowCount = getRowCount("Tests");
+        int colCount = getCellCount("Tests", 0);
 
-        int dataCols = 7; // A-G columns
-        Object[][] data = new Object[rowCount][dataCols + 1]; // +1 for rowIndex
-
-        for (int i = 1; i <= rowCount; i++) {
-            String testType = getCellData(sheetName, i, 0);
-            if (testType.equalsIgnoreCase("Register")) {
-                for (int j = 0; j < dataCols; j++) {
-                    data[i - 1][j] = getCellData(sheetName, i, j);
-                }
-                data[i - 1][dataCols] = i; // rowIndex
-            }
-        }
-        return data;
-    }
-
-    // DataProvider for GetAllUsers API
-    @DataProvider(name = "getAllUsersData")
-    public static Object[][] getAllUsersData() throws Exception {
-        String sheetName = "Tests";
-        int rowCount = getRowCount(sheetName);
-
-        int dataCols = 7; // A-G columns
-        Object[][] data = new Object[rowCount][dataCols + 1];
+        Object[][] data = new Object[rowCount][colCount + 1]; // +1 for rowIndex
 
         for (int i = 1; i <= rowCount; i++) {
-            String testType = getCellData(sheetName, i, 0);
-            if (testType.equalsIgnoreCase("GetAllUsers")) {
-                for (int j = 0; j < dataCols; j++) {
-                    data[i - 1][j] = getCellData(sheetName, i, j);
-                }
-                data[i - 1][dataCols] = i; // rowIndex
+            for (int j = 0; j < colCount; j++) {
+                data[i - 1][j] = getCellData("Tests", i, j);
             }
+            data[i - 1][colCount] = i; // ✅ store rowIndex as last column
         }
         return data;
     }
