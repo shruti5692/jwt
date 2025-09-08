@@ -1,12 +1,50 @@
 package base;
 
-import io.restassured.RestAssured;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import utils.XLUtility;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BaseTest {
+    String path = "testdata.xlsx"; // keep file in project root
 
-    @BeforeClass
-    public void setup() {
-        RestAssured.useRelaxedHTTPSValidation(); // handle https if needed
+    @DataProvider(name = "registerData")
+    public Object[][] getRegisterData() throws IOException {
+        XLUtility xl = new XLUtility(path);
+        int rowCount = xl.getRowCount("Sheet1");
+        List<Object[]> data = new ArrayList<>();
+
+        for (int i = 1; i <= rowCount; i++) {
+            String testType = xl.getCellData("Sheet1", i, 0);
+            if ("Register".equalsIgnoreCase(testType)) {
+                String testName = xl.getCellData("Sheet1", i, 1);
+                String baseUrl = xl.getCellData("Sheet1", i, 2);
+                String endpoint = xl.getCellData("Sheet1", i, 3);
+                String username = xl.getCellData("Sheet1", i, 4);
+                String password = xl.getCellData("Sheet1", i, 5);
+                data.add(new Object[]{testName, baseUrl, endpoint, username, password, i});
+            }
+        }
+        return data.toArray(new Object[0][]);
+    }
+
+    @DataProvider(name = "getAllUsersData")
+    public Object[][] getAllUsersData() throws IOException {
+        XLUtility xl = new XLUtility(path);
+        int rowCount = xl.getRowCount("Sheet1");
+        List<Object[]> data = new ArrayList<>();
+
+        for (int i = 1; i <= rowCount; i++) {
+            String testType = xl.getCellData("Sheet1", i, 0);
+            if ("GetAllUsers".equalsIgnoreCase(testType)) {
+                String testName = xl.getCellData("Sheet1", i, 1);
+                String baseUrl = xl.getCellData("Sheet1", i, 2);
+                String endpoint = xl.getCellData("Sheet1", i, 3);
+                data.add(new Object[]{testName, baseUrl, endpoint, i});
+            }
+        }
+        return data.toArray(new Object[0][]);
     }
 }

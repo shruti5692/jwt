@@ -4,34 +4,10 @@ import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import utils.XLUtility;
 
 public class GetAllUsersTest extends BaseTest {
-    String path = System.getProperty("user.dir") + "/src/test/resources/testdata.xlsx";
-    String sheetName = "Tests";
-
-    @DataProvider(name = "getAllUsersData")
-    public Object[][] getAllUsersData() throws Exception {
-        XLUtility xl = new XLUtility(path);
-        int rowCount = xl.getRowCount(sheetName);
-
-        Object[][] data = new Object[rowCount][4];
-        int index = 0;
-
-        for (int i = 1; i <= rowCount; i++) {
-            String testType = xl.getCellData(sheetName, i, 0);
-            if ("GetAllUsers".equalsIgnoreCase(testType)) {
-                data[index][0] = xl.getCellData(sheetName, i, 1); // TestName
-                data[index][1] = xl.getCellData(sheetName, i, 2); // BaseUrl
-                data[index][2] = xl.getCellData(sheetName, i, 3); // Endpoint
-                data[index][3] = i; // row index
-                index++;
-            }
-        }
-        return data;
-    }
 
     @Test(dataProvider = "getAllUsersData")
     public void testGetAllUsers(String testName, String baseUrl, String endpoint, int rowIndex) throws Exception {
@@ -44,16 +20,15 @@ public class GetAllUsersTest extends BaseTest {
                 .then()
                 .extract().response();
 
-        int statusCode = response.statusCode();
         System.out.println("Response: " + response.asString());
 
-        XLUtility xl = new XLUtility(path);
-        if (statusCode == 200) {
-            xl.setCellData(sheetName, rowIndex, 6, "PASS");
+        XLUtility xl = new XLUtility("testdata.xlsx");
+        if (response.statusCode() == 200) {
+            xl.setCellData("Sheet1", rowIndex, 6, "PASS");
         } else {
-            xl.setCellData(sheetName, rowIndex, 6, "FAIL");
+            xl.setCellData("Sheet1", rowIndex, 6, "FAIL");
         }
 
-        Assert.assertEquals(statusCode, 200, "GetAllUsers API failed!");
+        Assert.assertEquals(response.statusCode(), 200);
     }
 }

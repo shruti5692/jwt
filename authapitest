@@ -4,38 +4,10 @@ import base.BaseTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import utils.XLUtility;
 
 public class AuthAPITest extends BaseTest {
-    String path = System.getProperty("user.dir") + "/src/test/resources/testdata.xlsx";
-    String sheetName = "Tests";
-
-    @DataProvider(name = "registerData")
-    public Object[][] getRegisterData() throws Exception {
-        XLUtility xl = new XLUtility(path);
-        int rowCount = xl.getRowCount(sheetName);
-
-        // count only rows with TestType=Register
-        int cols = 6; // fixed as per our sheet
-        Object[][] data = new Object[rowCount][cols];
-        int index = 0;
-
-        for (int i = 1; i <= rowCount; i++) {
-            String testType = xl.getCellData(sheetName, i, 0);
-            if ("Register".equalsIgnoreCase(testType)) {
-                data[index][0] = xl.getCellData(sheetName, i, 1); // TestName
-                data[index][1] = xl.getCellData(sheetName, i, 2); // BaseUrl
-                data[index][2] = xl.getCellData(sheetName, i, 3); // Endpoint
-                data[index][3] = xl.getCellData(sheetName, i, 4); // Username
-                data[index][4] = xl.getCellData(sheetName, i, 5); // Password
-                data[index][5] = i; // row index for writing results later
-                index++;
-            }
-        }
-        return data;
-    }
 
     @Test(dataProvider = "registerData")
     public void testRegister(String testName, String baseUrl, String endpoint,
@@ -44,23 +16,22 @@ public class AuthAPITest extends BaseTest {
 
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
-                .header("Content-Type", "application/json")
-                .body("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}")
+                .contentType("application/json")
+                .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
                 .when()
                 .post(endpoint)
                 .then()
                 .extract().response();
 
-        int statusCode = response.statusCode();
         System.out.println("Response: " + response.asString());
 
-        XLUtility xl = new XLUtility(path);
-        if (statusCode == 200) {
-            xl.setCellData(sheetName, rowIndex, 6, "PASS");
+        XLUtility xl = new XLUtility("testdata.xlsx");
+        if (response.statusCode() == 200) {
+            xl.setCellData("Sheet1", rowIndex, 6, "PASS");
         } else {
-            xl.setCellData(sheetName, rowIndex, 6, "FAIL");
+            xl.setCellData("Sheet1", rowIndex, 6, "FAIL");
         }
 
-        Assert.assertEquals(statusCode, 200, "Register API failed!");
+        Assert.assertEquals(response.statusCode(), 200);
     }
 }
