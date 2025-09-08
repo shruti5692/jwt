@@ -2,39 +2,33 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import utils.XLUtility;
 
 public class AuthAPITest extends BaseTest {
 
     @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
-    public void testRegister(String testType, String testName, String baseUrl,
-                             String endpoint, String username, String password,
-                             String expectedResult, int rowIndex) throws Exception {
+    public void testRegister(String testType, String testName, String baseUrl, String endpoint,
+                             String username, String password, String expectedResult, int rowIndex) {
 
         if (!"Register".equalsIgnoreCase(testType)) {
-            return; // Skip if not a Register test
+            return; // skip if row is not Register
         }
 
-        System.out.println("Running Register test -> " + testName);
+        System.out.println("Running " + testType + " test -> " + testName);
 
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
                 .contentType("application/json")
                 .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
                 .when()
-                .post(endpoint)
-                .then()
-                .extract().response();
+                .post(endpoint);
 
         System.out.println("Response: " + response.asString());
 
-        boolean status = response.statusCode() == 200;
-        String result = status ? "PASS" : "FAIL";
-
-        XLUtility.setCellData("Tests", rowIndex, 6, result); // col 6 = ExpectedResult col
-
-        Assert.assertEquals(result, expectedResult, "Register API test failed!");
+        if ("PASS".equalsIgnoreCase(expectedResult)) {
+            response.then().statusCode(200);
+        } else {
+            response.then().statusCode(400);
+        }
     }
 }

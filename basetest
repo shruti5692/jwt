@@ -5,17 +5,17 @@ import io.restassured.response.Response;
 
 public class BaseTest {
 
-    // ✅ Returns JWT token after login
     protected String getAuthToken(String baseUrl, String username, String password) {
         Response response = RestAssured.given()
                 .baseUri(baseUrl)
                 .contentType("application/json")
                 .body("{\"username\":\"" + username + "\", \"password\":\"" + password + "\"}")
                 .when()
-                .post("/auth/login")
-                .then()
-                .extract().response();
+                .post("/auth/login");
 
-        return response.jsonPath().getString("token");
+        System.out.println("Login Response: " + response.asString());
+
+        // Since login API returns plain JWT string
+        return response.asString().replace("\"", "").trim();
     }
 }

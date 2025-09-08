@@ -2,22 +2,15 @@ package tests;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.testng.Assert;
 import org.testng.annotations.Test;
-import utils.XLUtility;
 
 public class GetAllUsersTest extends BaseTest {
 
     @Test(dataProvider = "testData", dataProviderClass = XLUtility.class)
-    public void testGetAllUsers(String testType, String testName, String baseUrl,
-                                String endpoint, String username, String password,
-                                String expectedResult, int rowIndex) throws Exception {
+    public void testGetAllUsers(String testType, String testName, String baseUrl, String endpoint,
+                                String username, String password, String expectedResult, int rowIndex) {
 
-        if (!"GetAllUsers".equalsIgnoreCase(testType)) {
-            return; // Skip if not GetAllUsers test
-        }
-
-        System.out.println("Running GetAllUsers test -> " + testName);
+        System.out.println("Running " + testType + " test -> " + testName);
 
         String token = getAuthToken(baseUrl, username, password);
 
@@ -25,17 +18,14 @@ public class GetAllUsersTest extends BaseTest {
                 .baseUri(baseUrl)
                 .header("Authorization", "Bearer " + token)
                 .when()
-                .get(endpoint)
-                .then()
-                .extract().response();
+                .get(endpoint);
 
         System.out.println("Response: " + response.asString());
 
-        boolean status = response.statusCode() == 200;
-        String result = status ? "PASS" : "FAIL";
-
-        XLUtility.setCellData("Tests", rowIndex, 6, result);
-
-        Assert.assertEquals(result, expectedResult, "GetAllUsers API test failed!");
+        if ("PASS".equalsIgnoreCase(expectedResult)) {
+            response.then().statusCode(200);
+        } else {
+            response.then().statusCode(403);
+        }
     }
 }
